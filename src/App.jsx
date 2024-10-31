@@ -80,8 +80,8 @@ function App() {
   });
 
   return (
-    <div class="h-full bg-gradient-to-br from-blue-100 to-purple-100 p-4 text-gray-800">
-      <div class="max-w-4xl mx-auto">
+    <div class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-4 text-gray-800">
+      <div class="h-full max-w-4xl mx-auto">
         <h1 class="text-4xl font-bold mb-8 text-center text-purple-600">راديو عربي متقدم</h1>
         <div class="mb-4">
           <label class="block text-xl font-semibold mb-2 text-purple-700">اختر البلد:</label>
@@ -113,8 +113,8 @@ function App() {
                     <p class="text-sm text-gray-500">{station.tags}</p>
                   </div>
                   <button
-                    class={`bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-full cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 ${
-                      playingStationId() === station.stationuuid ? 'opacity-50 cursor-not-allowed' : ''
+                    class={`bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:scale-105 ${
+                      playingStationId() === station.stationuuid ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
                     }`}
                     onClick={() => playStation(station)}
                     disabled={playingStationId() === station.stationuuid}
