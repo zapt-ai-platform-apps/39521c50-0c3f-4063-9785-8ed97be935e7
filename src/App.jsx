@@ -1,7 +1,7 @@
 import { createSignal, onMount, For, Show } from 'solid-js';
 
 function App() {
-  const [countries] = createSignal([
+  const countries = [
     { name: 'الإمارات العربية المتحدة', code: 'AE' },
     { name: 'الجزائر', code: 'DZ' },
     { name: 'البحرين', code: 'BH' },
@@ -24,18 +24,19 @@ function App() {
     { name: 'سوريا', code: 'SY' },
     { name: 'تونس', code: 'TN' },
     { name: 'اليمن', code: 'YE' },
-  ]);
+  ];
 
   const [selectedCountryCode, setSelectedCountryCode] = createSignal('');
   const [stations, setStations] = createSignal([]);
   const [currentStation, setCurrentStation] = createSignal(null);
   const [isPlaying, setIsPlaying] = createSignal(false);
-  const [loading, setLoading] = createSignal(false);
+  const [loadingStations, setLoadingStations] = createSignal(false);
+  const [playingStationId, setPlayingStationId] = createSignal(null);
   let audioPlayer;
 
   const fetchStations = async () => {
     if (!selectedCountryCode()) return;
-    setLoading(true);
+    setLoadingStations(true);
     try {
       const response = await fetch(
         `https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/${selectedCountryCode()}`
@@ -45,7 +46,7 @@ function App() {
     } catch (error) {
       console.error('Error fetching stations:', error);
     } finally {
-      setLoading(false);
+      setLoadingStations(false);
     }
   };
 
@@ -57,6 +58,11 @@ function App() {
     audioPlayer.play();
     setCurrentStation(station);
     setIsPlaying(true);
+    setPlayingStationId(station.stationuuid);
+    audioPlayer.onended = () => {
+      setIsPlaying(false);
+      setPlayingStationId(null);
+    };
   };
 
   const stopStation = () => {
@@ -66,6 +72,7 @@ function App() {
     }
     setIsPlaying(false);
     setCurrentStation(null);
+    setPlayingStationId(null);
   };
 
   onMount(() => {
@@ -73,30 +80,30 @@ function App() {
   });
 
   return (
-    <div class="min-h-screen bg-gradient-to-br from-blue-100 to-purple-100 p-4 text-gray-800">
+    <div class="h-full bg-gradient-to-br from-blue-100 to-purple-100 p-4 text-gray-800">
       <div class="max-w-4xl mx-auto">
         <h1 class="text-4xl font-bold mb-8 text-center text-purple-600">راديو عربي متقدم</h1>
         <div class="mb-4">
           <label class="block text-xl font-semibold mb-2 text-purple-700">اختر البلد:</label>
           <select
-            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent box-border"
+            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-400 focus:border-transparent box-border cursor-pointer"
             onChange={(e) => {
               setSelectedCountryCode(e.target.value);
               fetchStations();
             }}
           >
             <option value="">-- اختر البلد --</option>
-            <For each={countries()}>
+            <For each={countries}>
               {(country) => (
                 <option value={country.code}>{country.name}</option>
               )}
             </For>
           </select>
         </div>
-        <Show when={loading()}>
+        <Show when={loadingStations()}>
           <div class="text-center text-xl text-purple-600">جارٍ تحميل المحطات...</div>
         </Show>
-        <Show when={!loading() && stations().length > 0}>
+        <Show when={!loadingStations() && stations().length > 0}>
           <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <For each={stations()}>
               {(station) => (
@@ -106,8 +113,11 @@ function App() {
                     <p class="text-sm text-gray-500">{station.tags}</p>
                   </div>
                   <button
-                    class="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-full cursor-pointer transition duration-300 ease-in-out transform hover:scale-105"
+                    class={`bg-purple-500 hover:bg-purple-600 text-white font-semibold py-2 px-4 rounded-full cursor-pointer transition duration-300 ease-in-out transform hover:scale-105 ${
+                      playingStationId() === station.stationuuid ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                     onClick={() => playStation(station)}
+                    disabled={playingStationId() === station.stationuuid}
                   >
                     تشغيل
                   </button>
@@ -115,6 +125,9 @@ function App() {
               )}
             </For>
           </div>
+        </Show>
+        <Show when={!loadingStations() && stations().length === 0 && selectedCountryCode()}>
+          <div class="text-center text-xl text-purple-600">لا توجد محطات متاحة لهذا البلد.</div>
         </Show>
         <Show when={currentStation()}>
           <div class="fixed bottom-0 left-0 right-0 bg-white p-4 shadow-inner flex items-center justify-between">
