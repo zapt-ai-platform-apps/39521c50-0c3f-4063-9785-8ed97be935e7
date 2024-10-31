@@ -37,6 +37,7 @@ function App() {
   const fetchStations = async () => {
     if (!selectedCountryCode()) return;
     setLoadingStations(true);
+    setStations([]);
     try {
       const response = await fetch(
         `https://de1.api.radio-browser.info/json/stations/bycountrycodeexact/${selectedCountryCode()}`
@@ -62,6 +63,10 @@ function App() {
     audioPlayer.onended = () => {
       setIsPlaying(false);
       setPlayingStationId(null);
+    };
+    audioPlayer.onerror = () => {
+      console.error('Error playing station:', audioPlayer.error);
+      stopStation();
     };
   };
 
